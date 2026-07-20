@@ -12,6 +12,7 @@
   <meta property="og:image" content="images/hero-classroom.jpg">
   <link rel="icon" href="images/favicon.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -39,7 +40,7 @@
         <a href="#usecases">活用例</a>
         <a href="#support">導入支援</a>
         <a href="#faq">FAQ</a>
-        <a class="nav-cta" href="https://www.dartfish.co.jp/contactus/?dfbpv=1">資料請求</a>
+        <a class="nav-cta" href="#contact">資料請求・活用相談</a>
       </nav>
     </div>
   </header>
@@ -59,11 +60,11 @@
             <span>探究学習</span><span>データ分析</span><span>課題研究</span><span>部活動の強化</span>
           </div>
           <div class="hero-actions">
-            <a class="button button-primary" href="https://www.dartfish.co.jp/contactus/?dfbpv=1">
+            <a class="button button-primary" href="#contact">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6zM15 2v6h5M9 13h8M9 17h8"/></svg>
               資料を請求する
             </a>
-            <a class="button button-secondary" href="https://www.dartfish.co.jp/contactus/?dfbpv=1">
+            <a class="button button-secondary" href="#contact">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H7l-4 2 1.4-4.2A8 8 0 1 1 21 12ZM8 12h.01M12 12h.01M16 12h.01"/></svg>
               活用方法を相談する
             </a>
@@ -326,6 +327,102 @@
       </div>
     </section>
 
+    <section class="section contact-section" id="contact" aria-labelledby="contact-title">
+      <div class="container contact-layout">
+        <div class="contact-intro reveal">
+          <span class="section-kicker">CONTACT</span>
+          <h2 id="contact-title">資料請求・活用相談</h2>
+          <p>学校の目的や環境に合わせて、資料のご案内や活用方法をご提案します。複数の項目を選択できます。</p>
+          <div class="contact-assurance">
+            <strong>安心してお問い合わせください</strong>
+            <ul>
+              <li>教育・学校向けの専用窓口で受け付けます</li>
+              <li>通常2営業日以内を目安にご連絡します</li>
+              <li>入力内容はお問い合わせ対応のみに使用します</li>
+            </ul>
+          </div>
+        </div>
+
+        <form class="contact-form reveal" id="contact-form" action="/api/contact" method="post" novalidate>
+          <div class="form-status" id="form-status" role="status" aria-live="polite" hidden></div>
+          <input type="hidden" name="form_started_at" id="form-started-at" value="">
+          <div class="hp-field" aria-hidden="true">
+            <label for="company-website">Webサイト</label>
+            <input id="company-website" name="company_website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div class="form-grid">
+            <label class="form-field form-field-wide">
+              <span>学校・団体名 <em>必須</em></span>
+              <input name="organization" type="text" maxlength="120" autocomplete="organization" required>
+            </label>
+            <label class="form-field">
+              <span>氏名 <em>必須</em></span>
+              <input name="name" type="text" maxlength="80" autocomplete="name" required>
+            </label>
+            <label class="form-field">
+              <span>所属・役職</span>
+              <input name="role" type="text" maxlength="100" autocomplete="organization-title">
+            </label>
+            <label class="form-field">
+              <span>メールアドレス <em>必須</em></span>
+              <input name="email" type="email" maxlength="254" autocomplete="email" inputmode="email" required>
+            </label>
+            <label class="form-field">
+              <span>電話番号</span>
+              <input name="phone" type="tel" maxlength="30" autocomplete="tel" inputmode="tel">
+            </label>
+          </div>
+
+          <fieldset class="form-choice-group" data-required-group="request_types">
+            <legend>ご希望の内容 <em>必須・複数選択可</em></legend>
+            <div class="checkbox-grid">
+              <label><input type="checkbox" name="request_types" value="資料請求"><span>資料請求</span></label>
+              <label><input type="checkbox" name="request_types" value="活用方法の相談"><span>活用方法の相談</span></label>
+              <label><input type="checkbox" name="request_types" value="デモンストレーション"><span>デモンストレーション</span></label>
+              <label><input type="checkbox" name="request_types" value="見積もり"><span>見積もり</span></label>
+              <label><input type="checkbox" name="request_types" value="その他"><span>その他</span></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-choice-group">
+            <legend>検討している活用分野 <small>複数選択可</small></legend>
+            <div class="checkbox-grid">
+              <label><input type="checkbox" name="use_cases" value="DXハイスクール"><span>DXハイスクール</span></label>
+              <label><input type="checkbox" name="use_cases" value="SSH・探究学習"><span>SSH・探究学習</span></label>
+              <label><input type="checkbox" name="use_cases" value="授業・研究"><span>授業・研究</span></label>
+              <label><input type="checkbox" name="use_cases" value="部活動強化"><span>部活動強化</span></label>
+              <label><input type="checkbox" name="use_cases" value="スポーツ分析施設・研究環境の新設"><span>分析施設・研究環境の新設</span></label>
+              <label><input type="checkbox" name="use_cases" value="既存施設へのシステム導入"><span>既存施設へのシステム導入</span></label>
+              <label><input type="checkbox" name="use_cases" value="その他"><span>その他</span></label>
+            </div>
+          </fieldset>
+
+          <label class="form-field form-field-wide">
+            <span>お問い合わせ内容 <em>必須</em></span>
+            <textarea name="message" rows="7" maxlength="3000" required placeholder="現在の課題、対象となる授業・競技、導入希望時期などをご記入ください。"></textarea>
+            <small class="char-count" data-count-for="message">0 / 3000</small>
+          </label>
+
+          <label class="privacy-check">
+            <input type="checkbox" name="privacy_consent" value="同意する" required>
+            <span><a href="https://www.dartfish.co.jp/privacypolicy.html" target="_blank" rel="noopener">個人情報保護方針</a>を確認し、入力情報の取り扱いに同意します。 <em>必須</em></span>
+          </label>
+
+          <div class="turnstile-wrap">
+            <div id="turnstile-widget"></div>
+            <p class="turnstile-note">このフォームはCloudflare Turnstileで自動送信から保護されています。</p>
+          </div>
+
+          <button class="button button-primary form-submit" type="submit">
+            <span class="submit-label">入力内容を送信する</span>
+            <span class="submit-progress" hidden>送信しています…</span>
+          </button>
+          <p class="form-footnote">送信後、ご入力のメールアドレスへ受付確認メールをお送りします。</p>
+        </form>
+      </div>
+    </section>
+
     <section class="final-cta" aria-labelledby="cta-title">
       <div class="final-cta-pattern" aria-hidden="true"></div>
       <div class="container final-cta-inner reveal">
@@ -335,8 +432,8 @@
           <p>DXハイスクール・SSHにおける活用イメージや導入の進め方をご案内します。</p>
         </div>
         <div class="final-cta-actions">
-          <a class="button button-white" href="https://www.dartfish.co.jp/contactus/?dfbpv=1">資料を請求する</a>
-          <a class="button button-outline-white" href="https://www.dartfish.co.jp/contactus/?dfbpv=1">活用方法を相談する</a>
+          <a class="button button-white" href="#contact">資料を請求する</a>
+          <a class="button button-outline-white" href="#contact">活用方法を相談する</a>
         </div>
       </div>
     </section>
@@ -355,15 +452,15 @@
         <a href="https://www.dartfish.co.jp/company/">会社概要</a>
         <a href="https://www.dartfish.co.jp/">コーポレートサイト</a>
         <a href="https://www.dartfish.co.jp/privacypolicy.html">プライバシーポリシー</a>
-        <a href="https://www.dartfish.co.jp/contactus/?dfbpv=1">お問い合わせ</a>
+        <a href="#contact">お問い合わせ</a>
       </div>
       <small>© Dartfish Japan Co., Ltd. All Rights Reserved.</small>
     </div>
   </footer>
 
   <div class="mobile-cta" aria-label="お問い合わせ">
-    <a href="https://www.dartfish.co.jp/contactus/?dfbpv=1">資料請求</a>
-    <a href="https://www.dartfish.co.jp/contactus/?dfbpv=1">活用相談</a>
+    <a href="#contact">資料請求</a>
+    <a href="#contact">活用相談</a>
   </div>
 
   <script src="js/script.js" defer></script>

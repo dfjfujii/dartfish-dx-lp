@@ -61,3 +61,70 @@ dartfish-dx-lp/
 
 - `images/feature-3d.webp` は、実画面を入手するまでの機能イメージです。正式な製品画面への差し替えを推奨します。
 - 公開前に、使用画像の権利・掲載許可をご確認ください。
+
+## 教育・学校向け問い合わせフォーム
+
+LP内のフォームは `functions/api/contact.js`（Cloudflare Pages Functions）で処理します。
+通知先や差出人名はコードへ固定せず、Cloudflare Pagesの環境変数で変更できます。
+
+### 必要な環境変数
+
+Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値をProductionへ設定します。
+
+| 変数名 | 用途 | 初期値・設定例 |
+|---|---|---|
+| `CONTACT_TO_EMAIL` | 管理者通知の送信先 | `school_01@dartfish.co.jp` |
+| `CONTACT_FROM_EMAIL` | 通知・自動返信の送信元 | `school_01@dartfish.co.jp` |
+| `CONTACT_FROM_NAME` | メールに表示する差出人名 | `ダートフィッシュ・ジャパン 教育・学校向け窓口` |
+| `CONTACT_REPLY_TO_EMAIL` | 自動返信メールへの返信先 | `school_01@dartfish.co.jp` |
+| `TURNSTILE_SITE_KEY` | Turnstileの公開サイトキー | Cloudflareで発行した値 |
+| `TURNSTILE_SECRET_KEY` | Turnstileの秘密キー | Cloudflareで発行した値（暗号化推奨） |
+| `RESEND_API_KEY` | Resendのメール送信用APIキー | Resendで発行した値（暗号化推奨） |
+
+初回設定では上表の値をCloudflareへ登録してください。メールアドレスを将来変更するときは、コードを編集せず環境変数だけ変更して再デプロイします。
+
+### KV（連続送信・重複送信対策）
+
+1. CloudflareでKV名前空間を1つ作成します（例：`dartfish-contact-rate-limit`）。
+2. PagesプロジェクトのBindingsで、変数名 `CONTACT_RATE_LIMIT_KV` として接続します。
+3. ProductionとPreviewの両方でテストする場合は、それぞれにBindingを設定します。
+
+同じ送信元から10分間に3回を超える送信と、同じメールアドレス・学校名・本文による1時間以内の重複送信を拒否します。
+
+### Turnstile
+
+1. Cloudflare Turnstileでウィジェットを作成します。
+2. 許可するホスト名に本番のPagesドメインと独自ドメインを登録します。
+3. サイトキーを `TURNSTILE_SITE_KEY`、秘密キーを `TURNSTILE_SECRET_KEY` に設定します。
+
+画面表示だけでなく、Pages FunctionがCloudflareのSiteverify APIで毎回検証します。
+
+### メール送信（Resend）
+
+1. Resendで `dartfish.co.jp` または送信専用サブドメインを認証します。
+2. APIキーを作成し、Cloudflareの `RESEND_API_KEY` に暗号化して設定します。
+3. `CONTACT_FROM_EMAIL` はResendで認証済みのドメインに属するアドレスを指定します。
+
+管理者通知のReply-Toには問い合わせ者のメールアドレスを、自動返信のReply-Toには `CONTACT_REPLY_TO_EMAIL` を設定します。
+
+### 実装済みの迷惑送信対策
+
+- Turnstileのサーバー側検証（トークン期限・再利用対策を含む）
+- 人には見えないハニーポット
+- ページ表示から3秒未満、または2時間超の送信拒否
+- IP単位の短時間連続送信制限
+- 同一内容の重複送信制限
+- 本文等にURLが3件以上含まれる投稿の拒否
+- 必須項目、文字数、メール形式のサーバー側再検証
+- メール本文のHTMLエスケープ
+- APIキーと秘密キーをGitHubへ保存しない構成
+
+### 公開前の確認
+
+Cloudflareの環境変数・KV・Resendドメイン認証を設定してから、実際のメールアドレスで次を確認します。
+
+1. フォーム送信後に完了画面へ移動する。
+2. `CONTACT_TO_EMAIL` に管理者通知が届く。
+3. 問い合わせ者に自動返信が届く。
+4. 同じ内容を再送すると拒否される。
+5. 短時間に4回送信すると4回目が拒否される。
