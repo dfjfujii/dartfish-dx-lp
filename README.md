@@ -74,9 +74,8 @@ Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値�
 | 変数名 | 用途 | 初期値・設定例 |
 |---|---|---|
 | `CONTACT_TO_EMAIL` | 管理者通知の送信先 | `school@dartfish.co.jp` |
-| `CONTACT_FROM_EMAIL` | 通知・自動返信の送信元 | `school@dartfish.co.jp` |
+| `CONTACT_FROM_EMAIL` | 管理者通知の送信元 | `school@dartfish.co.jp` |
 | `CONTACT_FROM_NAME` | メールに表示する差出人名 | `ダートフィッシュ・ジャパン 教育・学校向け窓口` |
-| `CONTACT_REPLY_TO_EMAIL` | 自動返信メールへの返信先 | `school@dartfish.co.jp` |
 | `TURNSTILE_SITE_KEY` | Turnstileの公開サイトキー | Cloudflareで発行した値 |
 | `TURNSTILE_SECRET_KEY` | Turnstileの秘密キー | Cloudflareで発行した値（暗号化推奨） |
 | `HETEML_MAIL_RELAY_URL` | hetemlメール中継のURL | `https://www.dartfish.co.jp/dx-school-contact/relay.php` |
@@ -109,7 +108,7 @@ Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値�
 
 Pages Functionはメール本文を署名付きで中継処理へ渡します。中継処理は署名の有効期限、送信元ドメイン、管理者通知の送信先、二重送信を再検証してから、hetemlのsendmailで送信します。
 
-管理者通知のReply-Toには問い合わせ者のメールアドレスを、自動返信のReply-Toには `CONTACT_REPLY_TO_EMAIL` を設定します。
+管理者通知のReply-Toには問い合わせ者のメールアドレスを設定します。問い合わせ者への自動返信は行わず、送信完了はブラウザの完了画面で案内します。
 
 ### 実装済みの迷惑送信対策
 
@@ -132,6 +131,6 @@ Cloudflareの環境変数・KVとhetemlメール中継を設定してから、�
 
 1. フォーム送信後に完了画面へ移動する。
 2. `CONTACT_TO_EMAIL` に管理者通知が届く。
-3. 問い合わせ者に自動返信が届く。
+3. 問い合わせ者への自動返信が送られない。
 4. 同じ内容を再送すると拒否される。
 5. 短時間に4回送信すると4回目が拒否される。

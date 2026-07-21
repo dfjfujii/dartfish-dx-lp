@@ -188,7 +188,6 @@ export async function onRequestPost({ request, env }) {
   const toEmail = clean(env.CONTACT_TO_EMAIL, 254);
   const fromEmail = clean(env.CONTACT_FROM_EMAIL, 254);
   const fromName = clean(env.CONTACT_FROM_NAME, 100);
-  const replyTo = clean(env.CONTACT_REPLY_TO_EMAIL || toEmail, 254);
   const selectedRequests = requestTypes.join('・');
   const selectedUses = useCases.length ? useCases.join('・') : '未選択';
   const subject = `【教育・学校向けLP】${selectedRequests}／${organization}`.slice(0, 180);
@@ -209,19 +208,6 @@ export async function onRequestPost({ request, env }) {
       <tr><th style="text-align:left;padding:8px;border:1px solid #ddd">内容</th><td style="padding:8px;border:1px solid #ddd">${safeMessage}</td></tr>
     </table>`;
 
-  const autoReplyHtml = `
-    <p>${safeName} 様</p>
-    <p>このたびは、ダートフィッシュ・ジャパンへお問い合わせいただき、ありがとうございます。</p>
-    <p>以下の内容で受け付けました。担当者が確認し、通常2営業日以内を目安にご連絡します。</p>
-    <hr>
-    <p><strong>学校・団体名：</strong>${safeOrganization}<br>
-    <strong>ご希望の内容：</strong>${escapeHtml(selectedRequests)}<br>
-    <strong>検討している活用分野：</strong>${escapeHtml(selectedUses)}</p>
-    <p><strong>お問い合わせ内容</strong><br>${safeMessage}</p>
-    <hr>
-    <p>${escapeHtml(fromName)}</p>
-    <p style="font-size:12px;color:#667085">このメールは自動送信です。お心当たりがない場合は、このメールへ返信してお知らせください。</p>`;
-
   const idPrefix = `contact-${fingerprint.slice(0, 32)}`;
 
   try {
@@ -239,21 +225,6 @@ export async function onRequestPost({ request, env }) {
   } catch (error) {
     console.error('Admin notification failed', error.message);
     return json({ message: '送信処理で問題が発生しました。時間をおいて再度お試しください。' }, 502);
-  }
-
-  try {
-    await sendEmail(env, {
-      message_type: 'reply',
-      from_email: fromEmail,
-      from_name: fromName,
-      to_email: email,
-      reply_to: replyTo,
-      subject: '【ダートフィッシュ・ジャパン】お問い合わせを受け付けました',
-      html: autoReplyHtml
-    }, `${idPrefix}-reply`);
-  } catch (error) {
-    // The inquiry is already safely delivered to the administrator.
-    console.error('Auto reply failed', error.message);
   }
 
   return json({ ok: true, redirect: '/thanks.html' });
