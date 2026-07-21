@@ -105,6 +105,46 @@ async function sendEmail(env, payload, idempotencyKey) {
   return result;
 }
 
+async function sendTeamsNotification(env, payload) {
+  const webhookUrl = clean(env.TEAMS_WEBHOOK_URL, 2048);
+  if (!webhookUrl) return { skipped: true };
+
+  const endpoint = new URL(webhookUrl);
+  if (endpoint.protocol !== 'https:') {
+    throw new Error('Teams webhook URL must use HTTPS');
+  }
+
+  const text = [
+    '**教育・学校向けLPからのお問い合わせ**',
+    `学校・団体名：${payload.organization}`,
+    `氏名：${payload.name}`,
+    `所属・役職：${payload.role || '未入力'}`,
+    `メール：${payload.email}`,
+    `電話番号：${payload.phone || '未入力'}`,
+    `ご希望：${payload.selectedRequests}`,
+    `活用分野：${payload.selectedUses}`,
+    '',
+    '**お問い合わせ内容**',
+    payload.message
+  ].join('\n');
+
+  const response = await fetch(endpoint.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({ text })
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(`Teams webhook error ${response.status}: ${detail.slice(0, 300)}`);
+  }
+
+  return { ok: true };
+}
+
 export async function onRequestGet({ env }) {
   if (!env.TURNSTILE_SITE_KEY) return json({ message: 'フォーム設定が完了していません。' }, 503);
   return json({ turnstileSiteKey: env.TURNSTILE_SITE_KEY });
@@ -220,6 +260,21 @@ export async function onRequestPost({ request, env }) {
       subject,
       html: adminHtml
     }, `${idPrefix}-admin`);
+
+    try {
+      await sendTeamsNotification(env, {
+        organization,
+        name,
+        role,
+        email,
+        phone,
+        selectedRequests,
+        selectedUses,
+        message
+      });
+    } catch (teamsError) {
+      console.error('Teams notification failed', teamsError.message);
+    }
 
     await env.CONTACT_RATE_LIMIT_KV.put(limit.duplicateKey, 'sent', { expirationTtl: 3600 });
   } catch (error) {

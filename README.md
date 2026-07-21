@@ -80,6 +80,7 @@ Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値�
 | `TURNSTILE_SECRET_KEY` | Turnstileの秘密キー | Cloudflareで発行した値（暗号化推奨） |
 | `HETEML_MAIL_RELAY_URL` | hetemlメール中継のURL | `https://www.dartfish.co.jp/dx-school-contact/relay.php` |
 | `HETEML_MAIL_RELAY_SECRET` | Cloudflareと中継処理だけが共有する署名キー | 32文字以上のランダム値（Secretとして保存） |
+| `TEAMS_WEBHOOK_URL` | Teams専用チャンネルへの通知先 | Teams Workflowsで発行したURL（Secretとして保存） |
 
 初回設定では上表の値をCloudflareへ登録してください。メールアドレスを将来変更するときは、コードを編集せず環境変数だけ変更して再デプロイします。
 
@@ -109,6 +110,13 @@ Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値�
 Pages Functionはメール本文を署名付きで中継処理へ渡します。中継処理は署名の有効期限、送信元ドメイン、管理者通知の送信先、二重送信を再検証してから、hetemlのsendmailで送信します。
 
 管理者通知のReply-Toには問い合わせ者のメールアドレスを設定します。問い合わせ者への自動返信は行わず、送信完了はブラウザの完了画面で案内します。
+
+### Teams通知
+
+Teamsの「教育・学校向けお問い合わせ」チャンネルへ、管理者通知と同じ問い合わせ内容を投稿します。
+Teams Workflowsで発行したWebhook URLを、Cloudflareの `TEAMS_WEBHOOK_URL` にSecretとして設定します。
+
+Teams通知は補助通知として扱います。Teams側が一時的に停止していても、管理者メールの送信とフォームの完了画面は正常に動作します。
 
 ### 実装済みの迷惑送信対策
 
