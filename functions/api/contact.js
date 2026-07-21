@@ -180,7 +180,7 @@ export async function onRequestPost({ request, env }) {
   }
   if (!limit.allowed) {
     const text = limit.reason === 'duplicate'
-      ? '同じ内容はすでに受け付けています。受付確認メールをご確認ください。'
+      ? '同じ内容はすでに受け付けています。担当者からの連絡をお待ちください。'
       : '短時間に複数回の送信がありました。10分ほど待ってからお試しください。';
     return json({ message: text }, 429);
   }
