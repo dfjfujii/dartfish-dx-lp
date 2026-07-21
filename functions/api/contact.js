@@ -57,22 +57,52 @@ async function applyRateLimit(env, ip, fingerprint) {
   return { allowed: true, duplicateKey };
 }
 
+async function signRelayRequest(secret, timestamp, body) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(`${timestamp}.${body}`)
+  );
+  return [...new Uint8Array(signature)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 async function sendEmail(env, payload, idempotencyKey) {
-  const response = await fetch('https://api.resend.com/emails', {
+  const endpoint = new URL(env.HETEML_MAIL_RELAY_URL);
+  const allowedHosts = new Set(['dartfish.co.jp', 'www.dartfish.co.jp']);
+  if (endpoint.protocol !== 'https:' || !allowedHosts.has(endpoint.hostname)) {
+    throw new Error('Mail relay URL is not allowed');
+  }
+
+  const body = JSON.stringify({ ...payload, message_id: idempotencyKey });
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const signature = await signRelayRequest(env.HETEML_MAIL_RELAY_SECRET, timestamp, body);
+  const response = await fetch(endpoint.toString(), {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
-      'Idempotency-Key': idempotencyKey
+      Accept: 'application/json',
+      'X-Dartfish-Timestamp': timestamp,
+      'X-Dartfish-Signature': signature
     },
-    body: JSON.stringify(payload)
+    body
   });
 
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Email API error ${response.status}: ${detail.slice(0, 300)}`);
+    throw new Error(`Mail relay error ${response.status}: ${detail.slice(0, 300)}`);
   }
-  return response.json();
+  const result = await response.json();
+  if (!result.ok) throw new Error('Mail relay rejected the message');
+  return result;
 }
 
 export async function onRequestGet({ env }) {
@@ -83,7 +113,8 @@ export async function onRequestGet({ env }) {
 export async function onRequestPost({ request, env }) {
   const requiredSettings = [
     'TURNSTILE_SECRET_KEY',
-    'RESEND_API_KEY',
+    'HETEML_MAIL_RELAY_URL',
+    'HETEML_MAIL_RELAY_SECRET',
     'CONTACT_TO_EMAIL',
     'CONTACT_FROM_EMAIL',
     'CONTACT_FROM_NAME'
@@ -191,13 +222,14 @@ export async function onRequestPost({ request, env }) {
     <p>${escapeHtml(fromName)}</p>
     <p style="font-size:12px;color:#667085">このメールは自動送信です。お心当たりがない場合は、このメールへ返信してお知らせください。</p>`;
 
-  const from = `${fromName} <${fromEmail}>`;
   const idPrefix = `contact-${fingerprint.slice(0, 32)}`;
 
   try {
     await sendEmail(env, {
-      from,
-      to: [toEmail],
+      message_type: 'admin',
+      from_email: fromEmail,
+      from_name: fromName,
+      to_email: toEmail,
       reply_to: email,
       subject,
       html: adminHtml
@@ -211,8 +243,10 @@ export async function onRequestPost({ request, env }) {
 
   try {
     await sendEmail(env, {
-      from,
-      to: [email],
+      message_type: 'reply',
+      from_email: fromEmail,
+      from_name: fromName,
+      to_email: email,
       reply_to: replyTo,
       subject: '【ダートフィッシュ・ジャパン】お問い合わせを受け付けました',
       html: autoReplyHtml

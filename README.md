@@ -73,13 +73,14 @@ Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値�
 
 | 変数名 | 用途 | 初期値・設定例 |
 |---|---|---|
-| `CONTACT_TO_EMAIL` | 管理者通知の送信先 | `school_01@dartfish.co.jp` |
-| `CONTACT_FROM_EMAIL` | 通知・自動返信の送信元 | `school_01@dartfish.co.jp` |
+| `CONTACT_TO_EMAIL` | 管理者通知の送信先 | `school@dartfish.co.jp` |
+| `CONTACT_FROM_EMAIL` | 通知・自動返信の送信元 | `school@dartfish.co.jp` |
 | `CONTACT_FROM_NAME` | メールに表示する差出人名 | `ダートフィッシュ・ジャパン 教育・学校向け窓口` |
-| `CONTACT_REPLY_TO_EMAIL` | 自動返信メールへの返信先 | `school_01@dartfish.co.jp` |
+| `CONTACT_REPLY_TO_EMAIL` | 自動返信メールへの返信先 | `school@dartfish.co.jp` |
 | `TURNSTILE_SITE_KEY` | Turnstileの公開サイトキー | Cloudflareで発行した値 |
 | `TURNSTILE_SECRET_KEY` | Turnstileの秘密キー | Cloudflareで発行した値（暗号化推奨） |
-| `RESEND_API_KEY` | Resendのメール送信用APIキー | Resendで発行した値（暗号化推奨） |
+| `HETEML_MAIL_RELAY_URL` | hetemlメール中継のURL | `https://www.dartfish.co.jp/dx-school-contact/relay.php` |
+| `HETEML_MAIL_RELAY_SECRET` | Cloudflareと中継処理だけが共有する署名キー | 32文字以上のランダム値（Secretとして保存） |
 
 初回設定では上表の値をCloudflareへ登録してください。メールアドレスを将来変更するときは、コードを編集せず環境変数だけ変更して再デプロイします。
 
@@ -99,11 +100,14 @@ Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値�
 
 画面表示だけでなく、Pages FunctionがCloudflareのSiteverify APIで毎回検証します。
 
-### メール送信（Resend）
+### メール送信（heteml）
 
-1. Resendで `dartfish.co.jp` または送信専用サブドメインを認証します。
-2. APIキーを作成し、Cloudflareの `RESEND_API_KEY` に暗号化して設定します。
-3. `CONTACT_FROM_EMAIL` はResendで認証済みのドメインに属するアドレスを指定します。
+1. hetemlの `/web/dartfish.co.jp/dx-school-contact/relay.php` にメール中継処理を配置します。
+2. 公開フォルダ外の `/web/.dartfish-contact-relay.php` に署名キーを保存します。
+3. 同じ署名キーをCloudflareの `HETEML_MAIL_RELAY_SECRET` にSecretとして設定します。
+4. `HETEML_MAIL_RELAY_URL` に中継処理のHTTPS URLを設定します。
+
+Pages Functionはメール本文を署名付きで中継処理へ渡します。中継処理は署名の有効期限、送信元ドメイン、管理者通知の送信先、二重送信を再検証してから、hetemlのsendmailで送信します。
 
 管理者通知のReply-Toには問い合わせ者のメールアドレスを、自動返信のReply-Toには `CONTACT_REPLY_TO_EMAIL` を設定します。
 
@@ -117,11 +121,14 @@ Cloudflareダッシュボードの対象Pagesプロジェクトで、次の値�
 - 本文等にURLが3件以上含まれる投稿の拒否
 - 必須項目、文字数、メール形式のサーバー側再検証
 - メール本文のHTMLエスケープ
+- Cloudflareとheteml間のHMAC署名検証（5分で期限切れ）
+- heteml側の送信元ドメイン・管理者送信先制限
+- heteml側の24時間二重送信防止
 - APIキーと秘密キーをGitHubへ保存しない構成
 
 ### 公開前の確認
 
-Cloudflareの環境変数・KV・Resendドメイン認証を設定してから、実際のメールアドレスで次を確認します。
+Cloudflareの環境変数・KVとhetemlメール中継を設定してから、実際のメールアドレスで次を確認します。
 
 1. フォーム送信後に完了画面へ移動する。
 2. `CONTACT_TO_EMAIL` に管理者通知が届く。
