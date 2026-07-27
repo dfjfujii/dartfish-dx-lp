@@ -142,7 +142,24 @@
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.message || '送信できませんでした。時間をおいて再度お試しください。');
-        window.location.assign(result.redirect || '/thanks.html');
+        const redirectUrl = result.redirect || '/thanks.html';
+        if (typeof window.gtag === 'function') {
+          let redirected = false;
+          const redirect = () => {
+            if (redirected) return;
+            redirected = true;
+            window.location.assign(redirectUrl);
+          };
+          window.gtag('event', 'generate_lead', {
+            event_category: 'contact',
+            event_label: 'education_contact',
+            event_callback: redirect,
+            event_timeout: 1200
+          });
+          window.setTimeout(redirect, 1300);
+        } else {
+          window.location.assign(redirectUrl);
+        }
       } catch (error) {
         showStatus(error.message);
         if (window.turnstile && turnstileWidgetId !== undefined) window.turnstile.reset(turnstileWidgetId);
