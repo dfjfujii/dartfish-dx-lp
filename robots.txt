@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://dartfish-dx-lp.pages.dev/sitemap.xml
